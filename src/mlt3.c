@@ -24,7 +24,7 @@ int main(int argc, char ** argv)
 	signed char data_out;
 	int i;
 	if (argc >= 2) in_fd  = open(argv[1], O_RDONLY);
-	if (argc == 3) out_fd = open(argv[1], O_WRONLY);
+	if (argc == 3) out_fd = open(argv[2], O_WRONLY | O_CREAT);
 
 	while (read(in_fd, &data_in, 1))
 	{
