@@ -28,7 +28,7 @@ struct bmp_image
 
 void bmp_set_draw_callback(void (*callback)(int,int,uint32_t));
 
-void bmp_set_error_handler(void (*callback)(char*,...));
+void bmp_set_error_handler(int (*callback)(const char*,...));
 
 void bmp_draw(int x, int y, int index);
 

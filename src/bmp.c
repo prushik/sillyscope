@@ -11,14 +11,14 @@ static struct bmp_image *bmp[512];
 static int bmpc=0;
 
 static void (*bmp_draw_callback)(int,int,uint32_t);
-static void (*error_callback)(char*,...) = printf;
+static int (*error_callback)(const char*,...) = printf;
 
 void bmp_set_draw_callback(void (*callback)(int,int,uint32_t))
 {
 	bmp_draw_callback = callback;
 }
 
-void bmp_set_error_handler(void (*callback)(char*,...))
+void bmp_set_error_handler(int (*callback)(const char*,...))
 {
 	error_callback = callback;
 }
@@ -75,7 +75,7 @@ int bmp_load(char *bmp_fname)
 	if (img->file_header.magic!=0x4D42)
 	{
 		//Not a BMP
-		error_callback("E: Not bmp (%X)\n",img->file_header.magic);
+		error_callback("not bmp format (%X)\n",img->file_header.magic);
 		return 0;
 	}
 
@@ -91,7 +91,7 @@ int bmp_load(char *bmp_fname)
 	if (img->img_header.enc)
 	{
 		//Unsupported compression
-		error_callback("E: Encoded\n");
+		error_callback("compression not supported\n");
 		return 0;
 	}
 
@@ -144,8 +144,10 @@ int bmp_create(int source_x, int source_y, int w, int h)
 	bmpc=(bmpc+1)&0xff;
 
 	img->file_header.magic=0x4D42;
-	img->file_header.data_offset=16+sizeof(struct bmp_img_header);
-	img->file_header.fsize=16+sizeof(struct bmp_img_header)+((w*h)<<2);
+	img->file_header.data_offset=14+sizeof(struct bmp_img_header);
+	img->file_header.fsize=14+sizeof(struct bmp_img_header)+((w*h)<<2);
+//	if (img->file_header.fsize&0x03)
+//		img->file_header.fsize+=4-(img->file_header.fsize&0x03);
 	img->img_header.data_size=sizeof(struct bmp_img_header)+((w*h)<<2);
 	img->img_header.img_header_size=sizeof(struct bmp_img_header);
 	img->img_header.enc=0;
@@ -206,33 +208,36 @@ void bmp_save(char *bmp_fname, int index)
 {
 	int bmp_fd;
 
-	bmp_fd = open(bmp_fname,O_WRONLY|O_CREAT);
+	bmp_fd = open(bmp_fname,O_WRONLY|O_CREAT|O_TRUNC);
 
 	struct bmp_image *img=bmp[index];
 
 	if (img->file_header.magic!=0x4D42)
 	{
 		//Not a BMP
-		error_callback("E: Not bmp (%X)\n",img->file_header.magic);
+		error_callback("not bmp format (%X)\n",img->file_header.magic);
 		return;
 	}
 
 	if (img->img_header.enc!=0)
 	{
 		//Unsupported compression
-		error_callback("E: Cannot encode\n");
+		error_callback("compression not supported\n");
 		return;
 	}
 
-	write(bmp_fd,(void *)&img->file_header,2);
-	write(bmp_fd,(void *)&img->file_header.fsize,12);
-	write(bmp_fd,(void *)&img->img_header,sizeof(struct bmp_img_header));
-	write(bmp_fd,(void *)&img->file_header.garbage,2);
+	int written = 0;
+	written += write(bmp_fd,(void *)&img->file_header,2);
+	written += write(bmp_fd,(void *)&img->file_header.fsize,12);
+	written += write(bmp_fd,(void *)&img->img_header,sizeof(struct bmp_img_header));
 
 	//Jump to the pixel data
 //	lseek(bmp_fd,img->file_header.data_offset,SEEK_SET);
 
-	write(bmp_fd,img->pixel,(img->img_header.h*img->img_header.w)<<2);
+	written += write(bmp_fd,img->pixel,(img->img_header.h*img->img_header.w)<<2);
+
+//	if (written<img->file_header.fsize)
+//		write(bmp_fd,(void *)&img->file_header.garbage,img->file_header.fsize-written);
 
 	close(bmp_fd);
 
