@@ -179,7 +179,7 @@ int bmp_create(int source_x, int source_y, int w, int h)
 			else if (bytes_per_pixel==3)
 					*location = (tmp_pixel)|0xff000000; //I just hard code 0xff for the destination alpha
 			else if (bytes_per_pixel==4)
-					*location = 0xff000000|(x|(x<<8)|(y<<16)); //on little endian systems, the BMP data is already in the correct format
+					*location = 0x00000000;//|(x|(x<<8)|(y<<16)); //on little endian systems, the BMP data is already in the correct format
 		}
 	}
 

@@ -42,4 +42,6 @@ int bmp_load(char *bmp_fname);
 
 int bmp_create(int source_x, int source_y, int h, int w);
 
+void bmp_set_pixel(int x, int y, uint32_t pixel, int index);
+
 void bmp_save(char *bmp_fname, int index);
