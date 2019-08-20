@@ -9,5 +9,5 @@
 int main()
 {
 	int i = bmp_create(0,0,128,128);
-	bmp_save("./test.bmp");
+	bmp_save("./test.bmp", i);
 }
